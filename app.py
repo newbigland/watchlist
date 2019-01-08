@@ -49,6 +49,19 @@ def forge():
     click.echo('Done.')
 
 
+@app.context_processor
+def inject_user():
+    '''模板上下文处理函数,这个函数返回的变量（以字典键值对的形式）
+    将会统一注入到每一个模板的上下文环境中，因此可以直接在模板中使用。'''
+    user = User.query.first()
+    return dict(user=user)
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+
 @app.route('/hello')
 @app.route('/hi')
 def hello():
@@ -71,6 +84,5 @@ def test_url_for():
 
 @app.route('/')
 def index():
-    user = User.query.first()  # 读取用户记录
     movies = Movie.query.all()  # 读取所有电影记录
-    return render_template('index.html', user=user, movies=movies)
+    return render_template('index.html', movies=movies)
