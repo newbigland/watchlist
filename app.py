@@ -8,8 +8,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////' + os.path.join(app.root_path, 'data.sqlite3')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # 关闭对模型修改的监控
-app.config['SECRET_KEY'] = 'dev' # 这个秘钥用于签名
+app.config['SECRET_KEY'] = 'dev'  # 这个秘钥用于签名
+
 db = SQLAlchemy(app)
+
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'  # 值是login视图函数名
 
@@ -35,7 +37,7 @@ class Movie(db.Model):
 
 @app.cli.command()
 def forge():
-    '''生成假数据'''
+    """生成假数据"""
     db.create_all()
 
     name = 'cxw'
@@ -65,7 +67,7 @@ def forge():
 @app.cli.command()
 @click.option('--drop', is_flag=True, help="Create after drop.")
 def initdb(drop):
-    '''Initialize the database.'''
+    """Initialized database."""
     if drop:
         db.drop_all()
     db.create_all()
@@ -76,7 +78,7 @@ def initdb(drop):
 @click.option('--username', prompt=True, help='The username used to login.')
 @click.option('--password', prompt=True, hide_input=True, confirmation_prompt=True, help='The password used to login.')
 def admin(username, password):
-    '''create user.'''
+    """create user."""
     db.create_all()
     user = User.query.first()
     if user is not None:
@@ -94,20 +96,20 @@ def admin(username, password):
 
 @app.context_processor
 def inject_user():
-    '''模板上下文处理函数,这个函数返回的变量（以字典键值对的形式）
-    将会统一注入到每一个模板的上下文环境中，因此可以直接在模板中使用。'''
+    """模板上下文处理函数,这个函数返回的变量（以字典键值对的形式）
+    将会统一注入到每一个模板的上下文环境中，因此可以直接在模板中使用。"""
     user = User.query.first()
     return dict(user=user)
 
 
 @login_manager.user_loader
 def load_user(user_id):
-    '''定义用户加载回调函数'''
+    """定义用户加载回调函数"""
     user = User.query.get(int(user_id))
     return user
 
 
-@app.route('/login', methods=['GET','POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username']
@@ -158,7 +160,7 @@ def test_url_for():
     return "test page"
 
 
-@app.route('/settings', methods=['GET','POST'])
+@app.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
     if request.method == 'POST':
@@ -173,21 +175,21 @@ def settings():
     return render_template('settings.html')
 
 
-@app.route('/', methods=['GET','POST'])
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    if request.method =="POST":
-        if not current_user.is_authenticated: #如果当前用户未认证
+    if request.method == "POST":
+        if not current_user.is_authenticated:  # 如果当前用户未登录
             return redirect(url_for('index'))
         title = request.form.get('title')  # 获取表单数据,传入表单中输入字段的name值
         year = request.form.get('year')
-        if not title or not year or len(year) > 4 or len(title) > 60: # 验证输入数据
+        if not title or not year or len(year) > 4 or len(title) > 60:  # 验证输入数据
             flash('Invalid input.')  # 显示错误提示信息,此函数用来在视图函数里向模板传递提示消息
-            return redirect(url_for('index')) # 重定向到主页
+            return redirect(url_for('index'))  # 重定向到主页
         # 保存表单数据到数据库
         movie = Movie(title=title, year=year)
         db.session.add(movie)
         db.session.commit()
-        flash('Movie Item Created.') # 显示成功创建的提示
+        flash('Movie Item Created.')  # 显示成功创建的提示
         return redirect(url_for('index'))
     # 否则是GET请求，返回渲染后的页面
     user = User.query.first()
@@ -195,7 +197,7 @@ def index():
     return render_template('index.html', user=user, movies=movies)
 
 
-@app.route('/movie/edit/<int:movie_id>', methods=['GET','POST'])
+@app.route('/movie/edit/<int:movie_id>', methods=['GET', 'POST'])
 @login_required
 def edit(movie_id):
     movie = Movie.query.get_or_404(movie_id)
@@ -205,7 +207,7 @@ def edit(movie_id):
         year = request.form['year']
         if not title or not year or len(year) > 4 or len(title) > 60:
             flash('Invalid input.')
-            return redirect(url_for('edit'), movie_id=movie_id)  # 重定向到编辑页面
+            return redirect(url_for('edit', movie_id=movie.id))  # 重定向到编辑页面
 
         movie.title = title
         movie.year = year
