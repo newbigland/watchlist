@@ -1,3 +1,5 @@
 helloflask
 Flask 入门教程
 https://zhuanlan.zhihu.com/flask
+
+命令行输入 flask run 运行程序
